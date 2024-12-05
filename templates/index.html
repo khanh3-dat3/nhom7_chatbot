@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Hotel Booking</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lacquer&family=Oswald:wght@200..700&family=Sevillana&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Edu+AU+VIC+WA+NT+Pre:wght@400..700&family=Lacquer&family=Oswald:wght@200..700&family=Sevillana&family=Slabo+27px&family=Teko:wght@300..700&display=swap');
+
+        body {
+            font-family: 'Oswald', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #chat-container {
+            width: 50%;
+            max-width: 600px;
+            min-width: 300px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #chat-header {
+            background: #007bff;
+            color: #ffffff;
+            padding: 15px;
+            font-size: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        #chat-box {
+            flex-grow: 1;
+            padding: 10px;
+            overflow-y: auto;
+            border-bottom: 1px solid #ccc;
+        }
+
+        #chat-box .message {
+            margin: 10px 0;
+        }
+
+        .message.user {
+            text-align: right;
+            color: #4caf50;
+        }
+
+        .message.bot {
+            text-align: left;
+            color: #007bff;
+        }
+
+        #chat-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ccc;
+        }
+
+        #message-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #send-button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        #send-button:hover {
+            background-color: #0056b3;
+        }
+
+        #suggestion-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            justify-content: center;
+            border-top: 1px solid #ccc;
+        }
+
+        .suggestion-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .suggestion-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-header">Tư vấn đặt phòng khách sạn</div>
+        <div id="chat-box"></div>
+        <div id="chat-input">
+            <input type="text" id="message-input" placeholder="Nhập câu hỏi của bạn vào đây...">
+            <button id="send-button">Gửi</button>
+        </div>
+        <div id="suggestion-buttons">
+            <button class="suggestion-button" data-message="đặt phòng">Đặt Phòng</button>
+            <button class="suggestion-button" data-message="ưu đãi">Ưu Đãi</button>
+            <button class="suggestion-button" data-message="dịch vụ">Dịch Vụ</button>
+            <button class="suggestion-button" data-message="thời tiết">Thời Tiết</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const chatBox = document.getElementById("chat-box");
+        const messageInput = document.getElementById("message-input");
+        const sendButton = document.getElementById("send-button");
+        const suggestionButtons = document.querySelectorAll(".suggestion-button");
+
+        // Thêm tin nhắn vào giao diện
+        function addMessage(message, className) {
+            const messageElement = document.createElement("div");
+            messageElement.textContent = message;
+            messageElement.className = `message ${className}`;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Gửi tin nhắn
+        sendButton.addEventListener("click", () => {
+            const message = messageInput.value.trim();
+            if (message) {
+                addMessage(message, "user");
+                socket.emit("send_message", { message });
+                messageInput.value = "";
+            }
+        });
+
+        // Xử lý khi nhấn các nút gợi ý
+        suggestionButtons.forEach(button => {
+            button.addEventListener("click", () => {
+                const message = button.dataset.message;
+                addMessage(message, "user");
+                socket.emit("send_message", { message });
+            });
+        });
+
+        // Nhận tin nhắn từ chatbot
+        socket.on("receive_message", (data) => {
+            addMessage(data.message, "bot");
+        });
+    </script>
+</body>
+</html>
